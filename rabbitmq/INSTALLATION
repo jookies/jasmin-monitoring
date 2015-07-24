@@ -1,0 +1,17 @@
+* Move script/ into /etc/zabbix/
+* Modify zabbix_agent.conf with the followings::
+
+  EnableRemoteCommands=1
+  Server=52.18.180.164
+  Hostname=<jasmin node hostname>
+  Include=/etc/zabbix/zabbix_agentd.conf.d/*.conf
+
+* Move sudoers.d/* to /etc/sudoers.d/
+* chown root. /etc/sudoers.d/80-zabbix-rabbitmq
+* chmod 440 /etc/sudoers.d/80-zabbix-rabbitmq
+* Move zabbix_agentd.conf.d/* to /etc/zabbix/zabbix_agentd.conf.d/
+* chown zabbix. /etc/zabbix/zabbix_agentd.conf.d/zabbix-rabbitmq.conf
+* chmod +x /etc/zabbix/zabbix_agentd.conf.d/zabbix-rabbitmq.conf
+* Import template in Zabbix server
+
+Credits to Kravchuk S.V. (https://github.com/alfss) / https://github.com/alfss/zabbix-rabbitmq
