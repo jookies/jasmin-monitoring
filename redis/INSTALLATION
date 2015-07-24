@@ -1,4 +1,6 @@
 * Move script/ into /etc/zabbix/
+* chown zabbix. /etc/zabbix/script/redis/*
+* chmod +x /etc/zabbix/script/redis/*
 * Modify zabbix_agent.conf with the followings::
 
   EnableRemoteCommands=1
@@ -7,9 +9,8 @@
   Include=/etc/zabbix/zabbix_agentd.conf.d/*.conf
 
 * Move zabbix_agentd.conf.d/* to /etc/zabbix/zabbix_agentd.conf.d/
-* chown zabbix. /etc/zabbix/zabbix_agentd.conf.d/zabbix-rabbitmq.conf
-* chmod +x /etc/zabbix/zabbix_agentd.conf.d/zabbix-rabbitmq.conf
 * pip install redis
 * Import template in Zabbix server
+* Make sure its possible to connect to redis using the configured hostname in Zabbix
 
 Credits to Alexey Dubkov (https://github.com/blacked) / https://github.com/blacked/zbx_redis_template
