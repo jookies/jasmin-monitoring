@@ -1,0 +1,15 @@
+* Move script/ into /etc/zabbix/
+* Modify zabbix_agent.conf with the followings::
+
+  EnableRemoteCommands=1
+  Server=52.18.180.164
+  Hostname=<jasmin node hostname>
+  Include=/etc/zabbix/zabbix_agentd.conf.d/*.conf
+
+* Move zabbix_agentd.conf.d/* to /etc/zabbix/zabbix_agentd.conf.d/
+* chown zabbix. /etc/zabbix/zabbix_agentd.conf.d/zabbix-rabbitmq.conf
+* chmod +x /etc/zabbix/zabbix_agentd.conf.d/zabbix-rabbitmq.conf
+* pip install redis
+* Import template in Zabbix server
+
+Credits to Alexey Dubkov (https://github.com/blacked) / https://github.com/blacked/zbx_redis_template
