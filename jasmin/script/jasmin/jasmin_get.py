@@ -4,12 +4,13 @@ import json, struct, time, argparse, re, socket
 from telnetlib import Telnet, IAC, DO, DONT, WILL, WONT, SB, SE, TTYPE
 
 parser = argparse.ArgumentParser(description='Zabbix Jasmin status script')
+parser.add_argument('--hostname', required=True, help = "Jasmin's hostname (same configured in Zabbix hosts)")
 args = parser.parse_args()
 
 # Configuration
 zabbix_host = 'monitoring.jookies.net'  # Zabbix Server IP
 zabbix_port = 30551                     # Zabbix Server Port
-jcli = {'host': '127.0.0.1', # Must be the same configured in Zabbix hosts !
+jcli = {'host': args.hostname, # Must be the same configured in Zabbix hosts !
         'port': 8990,
         'username': 'jcliadmin',
         'password': 'jclipwd'}
