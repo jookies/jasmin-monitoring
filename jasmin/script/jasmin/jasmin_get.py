@@ -25,8 +25,6 @@ keys.append({'smppsapi': [
     'other_submit_error_count',
     'bind_rx_count',
     'bind_trx_count',
-    'created_at',
-    'last_received_elink_at',
     'elink_count',
     'throttling_error_count',
     'submit_sm_count',
@@ -36,23 +34,53 @@ keys.append({'smppsapi': [
     'data_sm_count',
     'submit_sm_request_count',
     'deliver_sm_count',
-    'last_sent_pdu_at',
     'unbind_count',
-    'last_received_pdu_at',
     'bind_tx_count',
-    ]})
+]})
 keys.append({'httpapi': [
     'server_error_count',
-    'last_request_at',
     'throughput_error_count',
     'success_count',
     'route_error_count',
     'request_count',
     'auth_error_count',
-    'created_at',
-    'last_success_at',
     'charging_error_count',
-    ]})
+]})
+keys.append({'users': {
+    'smppsapi': [
+        'bind_count',
+        'submit_sm_count',
+        'submit_sm_request_count',
+        'unbind_count',
+        'data_sm_count',
+        'other_submit_error_count',
+        'throttling_error_count',
+        'bound_tx_count',
+        'bound_rx_count',
+        'bound_trx_count',
+        'elink_count',
+        'deliver_sm_count',
+    ],
+    'httpapi': [
+        'connects_count',
+        'rate_request_count',
+        'submit_sm_request_count',
+        'balance_request_count',
+    ],
+}})
+keys.append({'smppcs': [
+    'disconnected_count',
+    'other_submit_error_count',
+    'submit_sm_count',
+    'bound_count',
+    'elink_count',
+    'throttling_error_count',
+    'connected_count',
+    'deliver_sm_count',
+    'data_sm_count',
+    'submit_sm_request_count',
+]})
+
 
 class jCliSessionError(Exception):
     pass
@@ -138,7 +166,7 @@ def process_option(tsocket, command, option):
         #print 'Do not', ord(option)
         tsocket.sendall(IAC + DONT + option)
 
-def wait_for_prompt(tn, command = None, prompt = r'jcli :', to = 2):
+def wait_for_prompt(tn, command = None, prompt = r'jcli :', to = 6):
     """Will send 'command' (if set) and wait for prompt
 
     Will raise an exception if 'prompt' is not obtained after 'to' seconds
@@ -153,14 +181,32 @@ def wait_for_prompt(tn, command = None, prompt = r'jcli :', to = 2):
     else:
         return response
 
-def get_stats_value(response, key):
+def get_stats_value(response, key, stat_type = None):
     "Parse response and get key's value, otherwise raise a jCliKeyError"
-    p = r"#%s\s+([0-9A-Za-z -:]+)" % key
+    if stat_type is None:
+        p = r"#%s\s+([0-9A-Za-z -:'\{\}_]+)" % key
+    else:
+        p = r"#%s\s+%s\s+([0-9A-Za-z -:'\{\}_]+)" % (key, stat_type)
+
     m = re.search(p, response, re.MULTILINE)
     if not m:
         raise jCliKeyError('Key (%s) not found !' % key)
     else:
         return m.group(1)
+
+def get_list_ids(response):
+    "Parse response and get list IDs, otherwise raise a jCliKeyError"
+    p = r"^#([A-Za-z0-9_-]+)\s+"
+    matches = re.findall(p, response, re.MULTILINE)
+    ids = []
+    if len(matches) == 0:
+        raise jCliKeyError('Cannot extract ids from response %s' % response)
+    
+    for o in matches:
+        if o not in ['Connector', 'User']:
+            ids.append(o)
+    
+    return ids
 
 def main():
     tn = None
@@ -172,15 +218,15 @@ def main():
         # for telnet session debug:
         #tn.set_debuglevel(1000)
         
-        tn.read_until('Authentication required', 1)
+        tn.read_until('Authentication required', 4)
         tn.write("\n")
-        tn.read_until("Username:", 1)
+        tn.read_until("Username:", 2)
         tn.write(jcli['username']+"\n")
-        tn.read_until("Password:", 1)
+        tn.read_until("Password:", 2)
         tn.write(jcli['password']+"\n")
 
         # We must be connected
-        idx, obj, response = tn.expect([r'Welcome to Jasmin (\d+\.\d+[a-z]+\d+) console'], 2)
+        idx, obj, response = tn.expect([r'Welcome to Jasmin (\d+\.\d+[a-z]+\d+) console'], 5)
         if idx == -1:
             raise jCliSessionError('Authentication failure')
         version = obj.group(1)
@@ -201,6 +247,33 @@ def main():
                 response = wait_for_prompt(tn, command = "stats --httpapi\n")
                 for k in key['httpapi']:
                     metrics.append(Metric(jcli['host'], 'jasmin[httpapi.%s]' % k, get_stats_value(response, k)))
+            elif type(key) == dict and 'smppcs' in key:
+                response = wait_for_prompt(tn, command = "stats --smppcs\n")
+                smppcs = get_list_ids(response)
+                for cid in smppcs:
+                    response = wait_for_prompt(tn, command = "stats --smppc %s\n" % cid)
+                    for k in key['smppcs']:
+                        metrics.append(Metric(jcli['host'], 'jasmin[smppc.%s,%s]' % (k, cid), get_stats_value(response, k)))
+            elif type(key) == dict and 'users' in key:
+                response = wait_for_prompt(tn, command = "stats --users\n")
+                users = get_list_ids(response)
+                for uid in users:
+                    response = wait_for_prompt(tn, command = "stats --user %s\n" % uid)
+                    for k in key['users']['httpapi']:
+                        metrics.append(Metric(jcli['host'], 'jasmin[user.httpapi.%s,%s]' % (k, uid), get_stats_value(response, k, stat_type = 'HTTP Api')))
+                    for k in key['users']['smppsapi']:
+                        if k in ['bound_rx_count', 'bound_tx_count', 'bound_trx_count']:
+                            r = get_stats_value(response, key = 'bound_connections_count', stat_type = 'SMPP Server')
+                            r = json.loads(r.replace("'", '"'))
+                            if k == 'bound_rx_count':
+                                v = r['bind_receiver']
+                            elif k == 'bound_tx_count':
+                                v = r['bind_transmitter']
+                            elif k == 'bound_trx_count':
+                                v = r['bind_transceiver']
+                        else:
+                            v = get_stats_value(response, k, stat_type = 'SMPP Server')
+                        metrics.append(Metric(jcli['host'], 'jasmin[user.smppsapi.%s,%s]' % (k, uid), v))
 
         # Send packet to zabbix
         send_to_zabbix(metrics, zabbix_host, zabbix_port)
