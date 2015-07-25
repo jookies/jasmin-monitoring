@@ -130,7 +130,7 @@ def main():
         if tn is not None and tn.get_socket():
             tn.close()
         if outcome is not None:
-            print outcome
+            print json.dumps(outcome)
 
         # Release the lock
         if lock.i_am_locking():

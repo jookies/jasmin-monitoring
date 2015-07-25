@@ -1,2 +1,0 @@
-# User rules for zabbix
-zabbix ALL=(ALL) NOPASSWD:/usr/sbin/rabbitmqctl

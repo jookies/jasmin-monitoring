@@ -1,11 +1,11 @@
-* pip install pyrabbit lockfile
+* pip install telnetlib lockfile
 * Move script/ into /etc/zabbix/
-* chown zabbix. /etc/zabbix/script/rabbitmq/*
-* chmod +x /etc/zabbix/script/rabbitmq/*
+* chown zabbix. /etc/zabbix/script/jasmin/*
+* chmod +x /etc/zabbix/script/jasmin/*
 * Move zabbix_agentd.conf.d/* to /etc/zabbix/zabbix_agentd.conf.d/
 * **crontab -e** and add the following line::
 
-  * * * * *       /etc/zabbix/script/rabbitmq/rabbitmq_get.py --host <hostname> &> /dev/null
+  * * * * *       /etc/zabbix/script/jasmin/jasmin_get.py --host <hostname> &> /dev/null
 
 * Modify zabbix_agent.conf with the followings::
 

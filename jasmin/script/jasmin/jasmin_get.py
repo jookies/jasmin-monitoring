@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # This a script that send metrics directly to Zabbix server
 # All metrics are gathered using Active agent.
+# Metrics are covering Jasmin stats (smpps, users, http ...)
 
 import json, struct, time, argparse, re, socket, sys
 from lockfile import FileLock, LockTimeout, AlreadyLocked
@@ -86,7 +87,6 @@ keys.append({'smppcs': [
     'data_sm_count',
     'submit_sm_request_count',
 ]})
-
 
 class jCliSessionError(Exception):
     pass
