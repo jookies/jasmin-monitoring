@@ -1,4 +1,6 @@
 #!/usr/bin/python
+# This a script that send metrics directly to Zabbix server
+# All metrics are gathered using Active agent.
 
 import json, struct, time, argparse, re, socket, sys
 from lockfile import FileLock, LockTimeout, AlreadyLocked
