@@ -1,7 +1,11 @@
 #!/usr/bin/python
 
-import json, struct, time, argparse, re, socket
+import json, struct, time, argparse, re, socket, sys
+from lockfile import FileLock, LockTimeout, AlreadyLocked
 from telnetlib import Telnet, IAC, DO, DONT, WILL, WONT, SB, SE, TTYPE
+
+# The script must not be executed simultaneously
+lock = FileLock("/tmp/jasmin_get")
 
 parser = argparse.ArgumentParser(description='Zabbix Jasmin status script')
 parser.add_argument('--hostname', required=True, help = "Jasmin's hostname (same configured in Zabbix hosts)")
@@ -166,7 +170,7 @@ def process_option(tsocket, command, option):
         #print 'Do not', ord(option)
         tsocket.sendall(IAC + DONT + option)
 
-def wait_for_prompt(tn, command = None, prompt = r'jcli :', to = 6):
+def wait_for_prompt(tn, command = None, prompt = r'jcli :', to = 12):
     """Will send 'command' (if set) and wait for prompt
 
     Will raise an exception if 'prompt' is not obtained after 'to' seconds
@@ -177,7 +181,10 @@ def wait_for_prompt(tn, command = None, prompt = r'jcli :', to = 6):
 
     idx, obj, response = tn.expect([prompt], to)
     if idx == -1:
-        raise jCliSessionError('Did not get prompt (%s)' % prompt)
+        if command is None:
+            raise jCliSessionError('Did not get prompt (%s)' % prompt)
+        else:
+            raise jCliSessionError('Did not get prompt (%s) for command (%s)' % (prompt, command))
     else:
         return response
 
@@ -211,6 +218,9 @@ def get_list_ids(response):
 def main():
     tn = None
     try:
+        # Ensure there are no paralell runs of this script
+        lock.acquire(timeout=5)
+
         # Connect and authenticate
         tn = Telnet(jcli['host'], jcli['port'])
         tn.set_option_negotiation_callback(process_option)
@@ -218,11 +228,11 @@ def main():
         # for telnet session debug:
         #tn.set_debuglevel(1000)
         
-        tn.read_until('Authentication required', 4)
+        tn.read_until('Authentication required', 8)
         tn.write("\n")
-        tn.read_until("Username:", 2)
+        tn.read_until("Username:", 5)
         tn.write(jcli['username']+"\n")
-        tn.read_until("Password:", 2)
+        tn.read_until("Password:", 5)
         tn.write(jcli['password']+"\n")
 
         # We must be connected
@@ -277,11 +287,20 @@ def main():
 
         # Send packet to zabbix
         send_to_zabbix(metrics, zabbix_host, zabbix_port)
+    except LockTimeout:
+        print 'Lock not acquired, exiting'
+    except AlreadyLocked:
+        print 'Already locked, exiting'
     except Exception, e:
+        print type(e)
         print 'Error: %s' % e
     finally:
         if tn is not None and tn.get_socket():
             tn.close()
+
+        # Release the lock
+        if lock.i_am_locking():
+            lock.release()
 
 if __name__ == '__main__':
     main()
