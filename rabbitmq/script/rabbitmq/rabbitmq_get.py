@@ -38,7 +38,6 @@ keys.append({'vhost.message_stats': [
     'deliver',
     'get_no_ack',
     'publish',
-    'redeliver',
 ]})
 keys.append({'queues': [
     'messages',
