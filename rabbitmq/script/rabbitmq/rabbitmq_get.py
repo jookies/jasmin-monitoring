@@ -153,16 +153,19 @@ def main():
         for key in keys:
             if type(key) == dict and 'vhost' in key:
                 for subkey in key['vhost']:
-                    metrics.append(Metric(rabbitmq['host'], 'rabbitmq.%s.%s' % ('vhost', subkey), vhost[subkey]))
+                    if subkey in vhost:
+                        metrics.append(Metric(rabbitmq['host'], 'rabbitmq.%s.%s' % ('vhost', subkey), vhost[subkey]))
             elif type(key) == dict and 'vhost.message_stats' in key:
                 for subkey in key['vhost.message_stats']:
-                    metrics.append(Metric(rabbitmq['host'], 'rabbitmq.%s.%s' % ('vhost.message_stats', subkey), 
-                        vhost['message_stats'][subkey]))
+                    if subkey in vhost['message_stats']:
+                        metrics.append(Metric(rabbitmq['host'], 'rabbitmq.%s.%s' % ('vhost.message_stats', subkey), 
+                            vhost['message_stats'][subkey]))
             elif type(key) == dict and 'queues' in key:
                 for queue in queues:
                     for subkey in key['queues']:
-                        metrics.append(Metric(rabbitmq['host'], 'rabbitmq.%s.%s[%s]' % ('queue', subkey, queue['name']), 
-                            queue[subkey]))
+                        if subkey in queue:
+                            metrics.append(Metric(rabbitmq['host'], 'rabbitmq.%s.%s[%s]' % ('queue', subkey, queue['name']), 
+                                queue[subkey]))
 
         # Send packet to zabbix
         send_to_zabbix(metrics, zabbix_host, zabbix_port)
