@@ -33,19 +33,19 @@ class jCliSessionError(Exception):
 class jCliKeyError(Exception):
     pass
 
-def process_option(tsocket, command, option):
+def process_option(tn, command, option):
     if command == DO and option == TTYPE:
-        tsocket.sendall(IAC + WILL + TTYPE)
+        tn.sendall(IAC + WILL + TTYPE)
         #print 'Sending terminal type "mypython"'
-        tsocket.sendall(IAC + SB + TTYPE + '\0' + 'mypython' + IAC + SE)
+        tn.sendall(IAC + SB + TTYPE + '\0' + 'mypython' + IAC + SE)
     elif command in (DO, DONT):
-        #print 'Will not', ord(option)
-        tsocket.sendall(IAC + WONT + option)
+        #print 'Will', ord(option)
+        tn.sendall(IAC + WILL + option)
     elif command in (WILL, WONT):
-        #print 'Do not', ord(option)
-        tsocket.sendall(IAC + DONT + option)
+        #print 'Do', ord(option)
+        tn.sendall(IAC + DO + option)
 
-def wait_for_prompt(tn, command = None, prompt = r'jcli :', to = 12):
+def wait_for_prompt(tn, command = None, prompt = r'jcli :', to = 20):
     """Will send 'command' (if set) and wait for prompt
 
     Will raise an exception if 'prompt' is not obtained after 'to' seconds
@@ -91,15 +91,15 @@ def main():
         # for telnet session debug:
         #tn.set_debuglevel(1000)
         
-        tn.read_until('Authentication required', 8)
+        tn.read_until('Authentication required', 16)
         tn.write("\n")
-        tn.read_until("Username:", 5)
+        tn.read_until("Username:", 16)
         tn.write(jcli['username']+"\n")
-        tn.read_until("Password:", 5)
+        tn.read_until("Password:", 16)
         tn.write(jcli['password']+"\n")
 
         # We must be connected
-        idx, obj, response = tn.expect([r'Welcome to Jasmin (\d+\.\d+[a-z]+\d+) console'], 5)
+        idx, obj, response = tn.expect([r'Welcome to Jasmin (\d+\.\d+[a-z]+\d+) console'], 16)
         if idx == -1:
             raise jCliSessionError('Authentication failure')
         

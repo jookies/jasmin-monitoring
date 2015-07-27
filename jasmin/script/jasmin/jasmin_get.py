@@ -5,7 +5,7 @@
 
 import json, struct, time, argparse, re, socket, sys
 from lockfile import FileLock, LockTimeout, AlreadyLocked
-from telnetlib import Telnet, IAC, DO, DONT, WILL, WONT, SB, SE, TTYPE
+from telnetlib import Telnet, IAC, DO, DONT, WILL, WONT, SB, SE, TTYPE, ECHO
 
 # The script must not be executed simultaneously
 lock = FileLock("/tmp/jasmin_get")
@@ -160,19 +160,19 @@ def _recv_all(sock, count):
         buf += chunk
     return buf
 
-def process_option(tsocket, command, option):
+def process_option(tn, command, option):
     if command == DO and option == TTYPE:
-        tsocket.sendall(IAC + WILL + TTYPE)
+        tn.sendall(IAC + WILL + TTYPE)
         #print 'Sending terminal type "mypython"'
-        tsocket.sendall(IAC + SB + TTYPE + '\0' + 'mypython' + IAC + SE)
+        tn.sendall(IAC + SB + TTYPE + '\0' + 'mypython' + IAC + SE)
     elif command in (DO, DONT):
-        #print 'Will not', ord(option)
-        tsocket.sendall(IAC + WONT + option)
+        #print 'Will', ord(option)
+        tn.sendall(IAC + WILL + option)
     elif command in (WILL, WONT):
-        #print 'Do not', ord(option)
-        tsocket.sendall(IAC + DONT + option)
+        #print 'Do', ord(option)
+        tn.sendall(IAC + DO + option)
 
-def wait_for_prompt(tn, command = None, prompt = r'jcli :', to = 12):
+def wait_for_prompt(tn, command = None, prompt = r'jcli :', to = 20):
     """Will send 'command' (if set) and wait for prompt
 
     Will raise an exception if 'prompt' is not obtained after 'to' seconds
@@ -225,20 +225,22 @@ def main():
 
         # Connect and authenticate
         tn = Telnet(jcli['host'], jcli['port'])
-        tn.set_option_negotiation_callback(process_option)
-        
+
         # for telnet session debug:
         #tn.set_debuglevel(1000)
+
+        tn.set_option_negotiation_callback(process_option)
+
         
-        tn.read_until('Authentication required', 8)
-        tn.write("\n")
-        tn.read_until("Username:", 5)
-        tn.write(jcli['username']+"\n")
-        tn.read_until("Password:", 5)
-        tn.write(jcli['password']+"\n")
+        tn.read_until('Authentication required', 16)
+        tn.write("\r\n")
+        tn.read_until("Username:", 16)
+        tn.write(jcli['username']+"\r\n")
+        tn.read_until("Password:", 16)
+        tn.write(jcli['password']+"\r\n")
 
         # We must be connected
-        idx, obj, response = tn.expect([r'Welcome to Jasmin (\d+\.\d+[a-z]+\d+) console'], 5)
+        idx, obj, response = tn.expect([r'Welcome to Jasmin (\d+\.\d+[a-z]+\d+) console'], 16)
         if idx == -1:
             raise jCliSessionError('Authentication failure')
         version = obj.group(1)
@@ -252,25 +254,25 @@ def main():
             if key == 'version':
                 metrics.append(Metric(jcli['host'], 'jasmin[%s]' % key, version))
             elif type(key) == dict and 'smppsapi' in key:
-                response = wait_for_prompt(tn, command = "stats --smppsapi\n")
+                response = wait_for_prompt(tn, command = "stats --smppsapi\r\n")
                 for k in key['smppsapi']:
                     metrics.append(Metric(jcli['host'], 'jasmin[smppsapi.%s]' % k, get_stats_value(response, k)))
             elif type(key) == dict and 'httpapi' in key:
-                response = wait_for_prompt(tn, command = "stats --httpapi\n")
+                response = wait_for_prompt(tn, command = "stats --httpapi\r\n")
                 for k in key['httpapi']:
                     metrics.append(Metric(jcli['host'], 'jasmin[httpapi.%s]' % k, get_stats_value(response, k)))
             elif type(key) == dict and 'smppcs' in key:
-                response = wait_for_prompt(tn, command = "stats --smppcs\n")
+                response = wait_for_prompt(tn, command = "stats --smppcs\r\n")
                 smppcs = get_list_ids(response)
                 for cid in smppcs:
-                    response = wait_for_prompt(tn, command = "stats --smppc %s\n" % cid)
+                    response = wait_for_prompt(tn, command = "stats --smppc %s\r\n" % cid)
                     for k in key['smppcs']:
                         metrics.append(Metric(jcli['host'], 'jasmin[smppc.%s,%s]' % (k, cid), get_stats_value(response, k)))
             elif type(key) == dict and 'users' in key:
-                response = wait_for_prompt(tn, command = "stats --users\n")
+                response = wait_for_prompt(tn, command = "stats --users\r\n")
                 users = get_list_ids(response)
                 for uid in users:
-                    response = wait_for_prompt(tn, command = "stats --user %s\n" % uid)
+                    response = wait_for_prompt(tn, command = "stats --user %s\r\n" % uid)
                     for k in key['users']['httpapi']:
                         metrics.append(Metric(jcli['host'], 'jasmin[user.httpapi.%s,%s]' % (k, uid), get_stats_value(response, k, stat_type = 'HTTP Api')))
                     for k in key['users']['smppsapi']:
