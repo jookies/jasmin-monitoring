@@ -1,3 +1,4 @@
+* Enable management: rabbitmq-plugins enable rabbitmq_management
 * pip install pyrabbit lockfile
 * Move script/ into /etc/zabbix/
 * chown zabbix. /etc/zabbix/script/rabbitmq/*
@@ -13,6 +14,6 @@
   EnableRemoteCommands=1
   Server=52.18.180.164
   Hostname=<jasmin node hostname>
-  Include=/etc/zabbix/zabbix_agentd.conf.d/*.conf
+  Include=/etc/zabbix/zabbix_agentd.conf.d/
 
 * Import template in Zabbix server
