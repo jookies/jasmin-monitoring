@@ -217,6 +217,21 @@ def get_list_ids(response):
     
     return ids
 
+def get_smppcs_service_and_session(response):
+    "Parse response and get Service and Session statuses for each smppc"
+    p = r"^#([A-Za-z0-9_-]+)\s+(started|stopped)\s+([A-Za-z_]+)"
+    matches = re.findall(p, response, re.MULTILINE)
+    r = {}
+    if len(matches) == 0:
+        raise jCliKeyError('Cannot extract smppc service and session from response %s' % response)
+    
+    for o in matches:
+        if o not in ['Connector', 'User']:
+            r[o[0]] = {'service': o[1]}
+            r[o[0]]['session'] = o[2]
+    
+    return r
+
 def main():
     tn = None
     try:
@@ -262,12 +277,24 @@ def main():
                 for k in key['httpapi']:
                     metrics.append(Metric(jcli['host'], 'jasmin[httpapi.%s]' % k, get_stats_value(response, k)))
             elif type(key) == dict and 'smppcs' in key:
+                # Get stats from statsm
                 response = wait_for_prompt(tn, command = "stats --smppcs\r\n")
                 smppcs = get_list_ids(response)
+                
+                # Get statuses from smppccm
+                response = wait_for_prompt(tn, command = "smppccm -l\r\n")
+                smppcs_status = get_smppcs_service_and_session(response)
+                
+                # Build outcome
                 for cid in smppcs:
+                    # From stats
                     response = wait_for_prompt(tn, command = "stats --smppc %s\r\n" % cid)
                     for k in key['smppcs']:
                         metrics.append(Metric(jcli['host'], 'jasmin[smppc.%s,%s]' % (k, cid), get_stats_value(response, k)))
+
+                    # From smppccm
+                    metrics.append(Metric(jcli['host'], 'jasmin[smppc.service,%s]' % (cid), smppcs_status[cid]['service']))
+                    metrics.append(Metric(jcli['host'], 'jasmin[smppc.session,%s]' % (cid), smppcs_status[cid]['session']))
             elif type(key) == dict and 'users' in key:
                 response = wait_for_prompt(tn, command = "stats --users\r\n")
                 users = get_list_ids(response)
@@ -289,8 +316,9 @@ def main():
                             v = get_stats_value(response, k, stat_type = 'SMPP Server')
                         metrics.append(Metric(jcli['host'], 'jasmin[user.smppsapi.%s,%s]' % (k, uid), v))
 
+        print metrics
         # Send packet to zabbix
-        send_to_zabbix(metrics, zabbix_host, zabbix_port)
+        #send_to_zabbix(metrics, zabbix_host, zabbix_port)
     except LockTimeout:
         print 'Lock not acquired, exiting'
     except AlreadyLocked:

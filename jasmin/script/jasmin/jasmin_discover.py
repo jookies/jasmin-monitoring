@@ -92,11 +92,11 @@ def main():
         #tn.set_debuglevel(1000)
         
         tn.read_until('Authentication required', 16)
-        tn.write("\n")
+        tn.write("\r\n")
         tn.read_until("Username:", 16)
-        tn.write(jcli['username']+"\n")
+        tn.write(jcli['username']+"\r\n")
         tn.read_until("Password:", 16)
-        tn.write(jcli['password']+"\n")
+        tn.write(jcli['password']+"\r\n")
 
         # We must be connected
         idx, obj, response = tn.expect([r'Welcome to Jasmin (\d+\.\d+[a-z]+\d+) console'], 16)
@@ -108,13 +108,13 @@ def main():
 
         # Build outcome for requested key
         if args.d == 'smppcs':
-            response = wait_for_prompt(tn, command = "stats --smppcs\n")
+            response = wait_for_prompt(tn, command = "stats --smppcs\r\n")
             smppcs = get_list_ids(response)
             outcome = {'data': []}
             for cid in smppcs:
                 outcome['data'].append({'{#CID}': cid})
         elif args.d == 'users':
-            response = wait_for_prompt(tn, command = "stats --users\n")
+            response = wait_for_prompt(tn, command = "stats --users\r\n")
             users = get_list_ids(response)
             outcome = {'data': []}
             for uid in users:
