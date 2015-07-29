@@ -316,9 +316,9 @@ def main():
                             v = get_stats_value(response, k, stat_type = 'SMPP Server')
                         metrics.append(Metric(jcli['host'], 'jasmin[user.smppsapi.%s,%s]' % (k, uid), v))
 
-        print metrics
+        #print metrics
         # Send packet to zabbix
-        #send_to_zabbix(metrics, zabbix_host, zabbix_port)
+        send_to_zabbix(metrics, zabbix_host, zabbix_port)
     except LockTimeout:
         print 'Lock not acquired, exiting'
     except AlreadyLocked:
