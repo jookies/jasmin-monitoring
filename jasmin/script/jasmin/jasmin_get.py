@@ -126,6 +126,7 @@ def send_to_zabbix(metrics, zabbix_host='127.0.0.1', zabbix_port=10051):
 
     try:
         zabbix = socket.socket()
+        zabbix.settimeout(120)
         zabbix.connect((zabbix_host, zabbix_port))
         zabbix.sendall(packet)
         resp_hdr = _recv_all(zabbix, 13)
