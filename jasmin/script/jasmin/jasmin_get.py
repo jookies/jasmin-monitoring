@@ -223,8 +223,8 @@ def get_smppcs_service_and_session(response):
     p = r"^#([A-Za-z0-9_-]+)\s+(started|stopped)\s+([A-Za-z_]+)"
     matches = re.findall(p, response, re.MULTILINE)
     r = {}
-    if len(matches) == 0:
-        raise jCliKeyError('Cannot extract smppc service and session from response %s' % response)
+    #if len(matches) == 0:
+    #    raise jCliKeyError('Cannot extract smppc service and session from response %s' % response)
     
     for o in matches:
         if o not in ['Connector', 'User']:
