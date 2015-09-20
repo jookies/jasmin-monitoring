@@ -256,7 +256,7 @@ def main():
         tn.write(jcli['password']+"\r\n")
 
         # We must be connected
-        idx, obj, response = tn.expect([r'Welcome to Jasmin (\d+\.\d+[a-z]+\d+) console'], 16)
+        idx, obj, response = tn.expect([r'Welcome to Jasmin (\d+\.\w+) console'], 16)
         if idx == -1:
             raise jCliSessionError('Authentication failure')
         version = obj.group(1)
