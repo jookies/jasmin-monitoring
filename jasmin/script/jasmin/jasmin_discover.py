@@ -70,11 +70,11 @@ def get_list_ids(response):
     ids = []
     if len(matches) == 0:
         raise jCliKeyError('Cannot extract ids from response %s' % response)
-    
+
     for o in matches:
         if o not in ['Connector', 'User']:
             ids.append(o)
-    
+
     return ids
 
 def main():
@@ -87,10 +87,10 @@ def main():
         # Connect and authenticate
         tn = Telnet(jcli['host'], jcli['port'])
         tn.set_option_negotiation_callback(process_option)
-        
+
         # for telnet session debug:
         #tn.set_debuglevel(1000)
-        
+
         tn.read_until('Authentication required', 16)
         tn.write("\r\n")
         tn.read_until("Username:", 16)
@@ -99,10 +99,10 @@ def main():
         tn.write(jcli['password']+"\r\n")
 
         # We must be connected
-        idx, obj, response = tn.expect([r'Welcome to Jasmin (\d+\.\d+[a-z]+\d+) console'], 16)
+        idx, obj, response = tn.expect([r'Welcome to Jasmin ([0-9a-z\.]+) console'], 16)
         if idx == -1:
             raise jCliSessionError('Authentication failure')
-        
+
         # Wait for prompt
         wait_for_prompt(tn)
 

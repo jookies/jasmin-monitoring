@@ -211,11 +211,11 @@ def get_list_ids(response):
     ids = []
     if len(matches) == 0:
         raise jCliKeyError('Cannot extract ids from response %s' % response)
-    
+
     for o in matches:
         if o not in ['Connector', 'User']:
             ids.append(o)
-    
+
     return ids
 
 def get_smppcs_service_and_session(response):
@@ -225,12 +225,12 @@ def get_smppcs_service_and_session(response):
     r = {}
     #if len(matches) == 0:
     #    raise jCliKeyError('Cannot extract smppc service and session from response %s' % response)
-    
+
     for o in matches:
         if o not in ['Connector', 'User']:
             r[o[0]] = {'service': o[1]}
             r[o[0]]['session'] = o[2]
-    
+
     return r
 
 def main():
@@ -247,7 +247,7 @@ def main():
 
         tn.set_option_negotiation_callback(process_option)
 
-        
+
         tn.read_until('Authentication required', 16)
         tn.write("\r\n")
         tn.read_until("Username:", 16)
@@ -256,11 +256,11 @@ def main():
         tn.write(jcli['password']+"\r\n")
 
         # We must be connected
-        idx, obj, response = tn.expect([r'Welcome to Jasmin (\d+\.\w+) console'], 16)
+        idx, obj, response = tn.expect([r'Welcome to Jasmin ([0-9a-z\.]+) console'], 16)
         if idx == -1:
             raise jCliSessionError('Authentication failure')
         version = obj.group(1)
-        
+
         # Wait for prompt
         wait_for_prompt(tn)
 
@@ -281,11 +281,11 @@ def main():
                 # Get stats from statsm
                 response = wait_for_prompt(tn, command = "stats --smppcs\r\n")
                 smppcs = get_list_ids(response)
-                
+
                 # Get statuses from smppccm
                 response = wait_for_prompt(tn, command = "smppccm -l\r\n")
                 smppcs_status = get_smppcs_service_and_session(response)
-                
+
                 # Build outcome
                 for cid in smppcs:
                     # From stats
