@@ -32,6 +32,7 @@ class NullWriter(object):
 
 def main():
     rabbit = None
+    outcome = None
     try:
         # Ensure there are no paralell runs of this script
         lock.acquire(timeout=5)
@@ -40,8 +41,8 @@ def main():
         nullwrite = NullWriter()
         oldstdout = sys.stdout
         sys.stdout = nullwrite # disable output
-        rabbit = RabbitClient('%s:%s' % (rabbitmq['host'], rabbitmq['port']), 
-            rabbitmq['username'], 
+        rabbit = RabbitClient('%s:%s' % (rabbitmq['host'], rabbitmq['port']),
+            rabbitmq['username'],
             rabbitmq['password'])
         if not rabbit.is_alive():
             raise Exception('Cannot connect to RabbitMQ')
