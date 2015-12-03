@@ -14,8 +14,6 @@ parser.add_argument('-d', required=True, help = "users or smppcs")
 args = parser.parse_args()
 
 # Configuration
-zabbix_host = 'monitoring.jookies.net'  # Zabbix Server IP
-zabbix_port = 30551                     # Zabbix Server Port
 jcli = {'host': args.hostname, # Must be the same configured in Zabbix hosts !
         'port': 8990,
         'username': 'jcliadmin',

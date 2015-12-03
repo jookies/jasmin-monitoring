@@ -14,8 +14,6 @@ parser.add_argument('-d', required=True, help = "queues")
 args = parser.parse_args()
 
 # Configuration
-zabbix_host = 'monitoring.jookies.net'  # Zabbix Server IP
-zabbix_port = 30551                     # Zabbix Server Port
 rabbitmq = {'host': args.hostname, # Must be the same configured in Zabbix hosts !
             'port': 15672,
             'username': 'guest',
