@@ -1,0 +1,16 @@
+* Move script/ into /etc/zabbix/
+* chown zabbix. /etc/zabbix/script/redis/*
+* chmod +x /etc/zabbix/script/redis/*
+* Move zabbix_agentd.conf.d/* to /etc/zabbix/zabbix_agentd.conf.d/
+* **crontab -e** and add the following line::
+
+  * * * * *       /usr/bin/redis-cli info > /tmp/redisstat
+
+* Modify zabbix_agent.conf with the followings::
+
+  Timeout=30
+  Server=52.18.180.164
+  Hostname=<jasmin node hostname>
+  Include=/etc/zabbix/zabbix_agentd.conf.d/
+
+* Import template in Zabbix server
