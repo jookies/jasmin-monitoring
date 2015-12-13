@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <zabbix_export>
     <version>2.0</version>
-    <date>2015-12-09T22:09:05Z</date>
+    <date>2015-12-13T21:01:18Z</date>
     <groups>
         <group>
             <name>Templates</name>
@@ -1194,7 +1194,7 @@
                             <ymax_item_1>0</ymax_item_1>
                             <graph_items>
                                 <graph_item>
-                                    <sortorder>0</sortorder>
+                                    <sortorder>1</sortorder>
                                     <drawtype>2</drawtype>
                                     <color>EE0000</color>
                                     <yaxisside>0</yaxisside>
@@ -1206,8 +1206,8 @@
                                     </item>
                                 </graph_item>
                                 <graph_item>
-                                    <sortorder>1</sortorder>
-                                    <drawtype>1</drawtype>
+                                    <sortorder>0</sortorder>
+                                    <drawtype>5</drawtype>
                                     <color>00DD00</color>
                                     <yaxisside>0</yaxisside>
                                     <calc_fnc>2</calc_fnc>
